@@ -16,3 +16,27 @@ func (f Foo) Sum(args Args, reply *int) error {
 }
 ```
 在服务器端通过map保存服务注册的结果，用sync.Map去存。
+
+- 第四天：超时处理：超时就是通过监听channel来完成的，用一个goroutine去完成业务，如果业务完成，向ch中传入信号。主线程在等待，利用select监听time.after和ch，如果从time.after里读取到，说明超时了，如果从ch读到说明没超时。
+> 这里借助time.after，会返回一个channel，如果超过了给定时间，会从这个channel里面返回信号。(定时器)
+```go
+ch := make(chan clientResult)
+go func() {
+	client, err := newClient(conn, opt)
+	ch <- clientResult{
+		client: client,
+		err:    err,
+	}
+}()
+if opt.ConnectTimeout == 0 {
+    result := <-ch
+    return result.client, result.err
+}
+select {
+case <-time.After(opt.ConnectTimeout):
+	return nil, fmt.Errorf("rpc client: connect timeout: expect within %s", opt.ConnectTimeout)
+case result := <-ch:
+	return result.client, result.err
+}
+```
+`opt.ConnectTimeout == 0 `说明可以无限等待
