@@ -40,3 +40,6 @@ case result := <-ch:
 }
 ```
 `opt.ConnectTimeout == 0 `说明可以无限等待
+- 第五天：支持HTTP协议，Web 开发中，我们经常使用 HTTP 协议中的 GET、POST 等方式发送请求，但 RPC 的消息格式与标准的 HTTP 协议并不兼容，在这种情况下，就需要一个协议的转换过程。HTTP 协议的 CONNECT 方法恰好提供了这个能力，CONNECT 一般用于代理服务。
+也就是说，首先用CONNECT方法建立连接，连接建立后用hijack把HTTP连接劫持下来，变成TCP连接，在这个TCP连接上进行RPC消息的传输。客户端和服务端都要实现HTTP的处理，客户端发送CONNECT，服务端接收到CONNECT后，劫持下来，然后进行RPC。服务端就是要实现http.handler接口，也就是实现serverHTTP方法。
+> hijack将HTTP连接变成TCP连接，在这个连接上传递消息就不用遵循HTTP格式了。
