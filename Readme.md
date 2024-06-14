@@ -64,3 +64,14 @@ case RoundRobinSelect:
     return m.servers[index], nil
 }
 ```
+
+第七天：服务发现与注册中心，在第六天我们是通过硬编码服务器地址告诉客户端访问RPC服务时可以去这几个服务器，但是我们不应该这样。为此，我们实现一个注册中心的结构，服务端会定时向注册中心上报自己的地址，客户端会定期从注册中心拿现存的服务器地址，然后选择一个发送RPC请求。注册中心就是一个HTTP服务端和HTTP客户端，接收HTTP消息，在HTTP头部中放入server的地址。
+服务端需要定期向注册中心发送心跳heartbeat：
+```go
+t := time.NewTicker(duration)
+for err == nil {
+	<-t.C
+	err = sendHeartbeat(registry, addr)
+}
+```
+> time.NewTicker提供可以一直使用的定时器，负责定期任务。time.after提供一次性定时器，负责一次性任务。
